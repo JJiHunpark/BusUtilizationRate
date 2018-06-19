@@ -10,23 +10,25 @@ head(Transportation)
 Transportation_seoul <- Transportation[Transportation$분류=="서울시",] # 서울시에 대한 정보만 추출
 Transportation_seoul <- Transportation_seoul[,-c(2,3,6,13,14)] # 필요한 컬럼만 추출
 Transportation_seoul <- Transportation_seoul[c(order(Transportation_seoul$기간)),]
+# dim(Transportation_seoul) # 행, 열 개수 확인
+# Transportation_seoul <- Transportation_seoul[complete.cases(Transportation_seoul),]  # 결측치 제거
 Transportation_seoul
 
 # 이용교통편 비교 그래프
 # install.packages("ggplot2")
 library("ggplot2")
 
-# 연도 별 버스 이용률
+# 연간 버스 이용률
 ggplot(Transportation_seoul, aes(x=기간, y=버스)) + 
   xlab('YEAR') +
   ylab('Rate') +
   geom_line(colour="red") + 
   geom_point(size=2, shape=19, colour="red") + 
   theme_bw() +
-  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Bus utilization rate") +
+  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Annual bus utilization rate") +
   theme(plot.title = element_text(hjust = 0.5))
   
-# 연도 별 이용교통편 이용률 비교
+# 연간 교통수단 이용률
 ggplot(Transportation_seoul, aes(x=기간, y=버스)) + 
   xlab('YEAR') +
   ylab('Rate') +
@@ -50,11 +52,11 @@ ggplot(Transportation_seoul, aes(x=기간, y=버스)) +
   geom_point(aes(x=기간,y=버스.지하철),colour="Black") +
   
   theme_bw() +
-  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Traffic usage") +
+  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Annual traffic usage rate") +
   theme(plot.title = element_text(hjust = 0.5))
 
 
-# 연도 별 버스, 지하철, 버스+지하철 이용률
+# 연간 버스, 지하철, 버스+지하철 이용률
 ggplot(Transportation_seoul, aes(x=기간, y=버스)) + 
   xlab('YEAR') +
   ylab('Rate') +
@@ -68,7 +70,7 @@ ggplot(Transportation_seoul, aes(x=기간, y=버스)) +
   geom_point(aes(x=기간,y=버스.지하철),colour="Black") +
   
   theme_bw() +
-  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016)) + ggtitle("Status of use transportation") +
+  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016)) + ggtitle("Annual public transportation usage rate") +
   theme(plot.title = element_text(hjust = 0.5))
 
 ############################################################################
@@ -80,7 +82,7 @@ Satisfaction_seoul <- Satisfaction_seoul[,-c(2,3)] # 필요한 컬럼만 추출
 Satisfaction_seoul <- Satisfaction_seoul[c(order(Satisfaction_seoul$기간)),]
 Satisfaction_seoul
 
-# 년도 별 버스 만족도
+# 연간 버스 만족도
 ggplot(Satisfaction_seoul, aes(x=기간, y=환승이용)) + 
   xlab('YEAR') +
   ylab('satisfaction') +
@@ -98,25 +100,25 @@ ggplot(Satisfaction_seoul, aes(x=기간, y=환승이용)) +
   geom_point(aes(x=기간,y=요금),colour="Navy") +
   
   theme_bw() +
-  scale_x_continuous(breaks = c(2012, 2014))+ ggtitle("Bus satisfaction rate") +
+  scale_x_continuous(breaks = c(2011,2012,2013,2014,2015,2016))+ ggtitle("Annual bus satisfaction") +
   theme(plot.title = element_text(hjust = 0.5))
 
-# 버스 만족도에 따른 버스 이용률
+# 연간 버스 만족도에 따른 이용률
 Transportation_seoul_comparison <- Transportation_seoul[7:12,c(1,5)]
 Satisfaction_seoul_comparison <- Satisfaction_seoul[,c(1,2)]
 
-ggplot(Transportation_seoul_comparison, aes(x=기간, y=log(버스)*2)) + 
+ggplot(Transportation_seoul_comparison, aes(x=기간, y=버스)) + 
   xlab('YEAR') +
   ylab('Rate') +
   
-  geom_line(colour="red") + 
-  geom_line(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합),colour="Orange") +
+  geom_line(colour="red") +   # 버스 이용률  
+  geom_line(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합*3),colour="Orange") + # 버스 만족도 
   
   geom_point(size=2, shape=19, colour="red") + 
-  geom_point(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합),colour="Orange") +
+  geom_point(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합*3),colour="Orange") +
   
   theme_bw() +
-  scale_x_continuous(breaks = c(2011,2012,2013,2014,2015,2016))+ ggtitle("Utilization rate relative to bus satisfaction") +
+  scale_x_continuous(breaks = c(2011,2012,2013,2014,2015,2016))+ ggtitle("Utilization according to annual bus satisfaction") +
   theme(plot.title = element_text(hjust = 0.5))
 
 ############################################################################
@@ -142,22 +144,54 @@ Satisfaction_train <- Satisfaction_train[c(order(Satisfaction_train$기간)),]
 Satisfaction_train$지하철 <- as.numeric(as.character(Satisfaction_train$지하철))
 Satisfaction_train
 
-# 지하철 이용도에 혼잡도와 만족도가 관련이 있는지 확인
+# 연간 지하철 만족도에 따른 이용률
 ggplot(Congested_train, aes(x=기간, y=지하철혼잡도/10)) + 
   xlab('YEAR') +
   ylab('RATE') +
   
-  geom_line(colour="Orange") + # 지하철 혼잡도
+  # geom_line(colour="Orange") + # 지하철 혼잡도
   geom_line(aes(x=use_train$기간,y=use_train$지하철),colour="blue") +   # 지하철 이용률
   geom_line(aes(x=Satisfaction_train$기간,y=Satisfaction_train$지하철*2),colour="Green") +  # 지하철 만족도
   
-  geom_point(size=2, shape=19, colour="Orange") + 
+  # geom_point(size=2, shape=19, colour="Orange") + 
   geom_point(aes(x=use_train$기간,y=use_train$지하철),colour="blue") +  
   geom_point(aes(x=Satisfaction_train$기간,y=Satisfaction_train$지하철*2),colour="Green") + 
   
   theme_bw() +
-  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Bus utilization factor") +
+  scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Utilization according to annual subway satisfaction") +
   theme(plot.title = element_text(hjust = 0.5))
 
 ############################################################################
+# 지하철 이용률 요인 분석
+# 지하철 요금, 편의시설, 공기질, 혼잡도가 지하철 이용에 영향을 미치는지 확인
+Subway <- read.csv("Subway_Utilization_Factor.csv", sep=",", header=T)
+Subway <- Subway[,-c(1)] # 필요한 컬럼만 추출
+Subway
+str(Subway)
 
+# 변수 간 산포도 매트릭스 출력
+cor(Subway[c("Subway", "Fare", "Congested", "PM10", "CO2", "Elevator", "Escalator")])
+pairs(Subway[c("Subway", "Fare", "Congested", "PM10", "CO2", "Elevator", "Escalator")])
+
+# install.packages("psych")
+library(psych)
+pairs.panels(Subway[c("Subway", "Fare", "Congested", "PM10", "CO2", "Elevator", "Escalator")])
+
+################################################################################
+# 변수 선택 모형
+fit <- lm(Subway ~ ., data=Subway)
+summary(fit)
+# forward 모형
+fit.con <- lm(Subway~1,data = Subway)
+fit.forward <- step(fit.con,scope=list(lower=fit.con, upper=fit),direction = "forward")
+summary(fit.forward)
+# backward 모형
+fit.backward <- step(fit, scope = list(lower = fit.con, upper = fit), direction = "backward")
+summary(fit.backward)
+# stepwise 모형
+fit.both <- step(fit.con, scope = list(lower = fit.con, upper = fit), direction = "both")
+summary(fit.backward)
+
+# forward 모형 선택 
+fit <- lm(formula = Subway ~ PM10, data = Subway)
+summary(fit)
