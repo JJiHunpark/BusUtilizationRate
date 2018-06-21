@@ -108,21 +108,21 @@ Transportation_seoul_comparison <- Transportation_seoul[7:12,c(1,5)]
 Satisfaction_seoul_comparison <- Satisfaction_seoul[,c(1,2)]
 
 Transportation_seoul_comparison <- transform(Transportation_seoul_comparison,
-                                             s.버스 = scale(버스)
+                                             버스 = scale(버스)
                                              )
 Satisfaction_seoul_comparison <- transform(Satisfaction_seoul_comparison,
-                                           s.종합 = scale(종합)
+                                           종합 = scale(종합)
 )
 
-ggplot(Transportation_seoul_comparison, aes(x=기간, y=s.버스)) + 
+ggplot(Transportation_seoul_comparison, aes(x=기간, y=버스)) + 
   xlab('YEAR') +
   ylab('Rate') +
   
   geom_line(colour="red") +   # 버스 이용률  
-  geom_line(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$s.종합),colour="Orange") + # 버스 만족도 
+  geom_line(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합),colour="Orange") + # 버스 만족도 
   
   geom_point(size=2, shape=19, colour="red") + 
-  geom_point(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$s.종합),colour="Orange") +
+  geom_point(aes(x=Satisfaction_seoul_comparison$기간,y=Satisfaction_seoul_comparison$종합),colour="Orange") +
   
   theme_bw() +
   scale_x_continuous(breaks = c(2011,2012,2013,2014,2015,2016))+ ggtitle("Utilization according to annual bus satisfaction") +
@@ -174,7 +174,7 @@ Transport_Average_scale <- transform(Transport_Average,
                                Average = scale(Average)
                     ) 
 Satisfaction_train_scale <- transform(Satisfaction_train,
-                              s.지하철 = scale(지하철)
+                              지하철 = scale(지하철)
                   ) 
 
 # 연간 지하철 만족도에 따른 이용률
@@ -183,10 +183,10 @@ ggplot(Transport_Average_scale, aes(x=연도, y=Average)) +
   ylab('RATE') +
   
   geom_line(colour="blue") + # 지하철 이용률
-  geom_line(aes(x=Satisfaction_train_scale$기간,y=Satisfaction_train_scale$s.지하철),colour="Green") +  # 지하철 만족도
+  geom_line(aes(x=Satisfaction_train_scale$기간,y=Satisfaction_train_scale$지하철),colour="Green") +  # 지하철 만족도
   
   geom_point(size=2, shape=19, colour="blue") + 
-  geom_point(aes(x=Satisfaction_train_scale$기간,y=Satisfaction_train_scale$s.지하철),colour="Green") + 
+  geom_point(aes(x=Satisfaction_train_scale$기간,y=Satisfaction_train_scale$지하철),colour="Green") + 
   
   theme_bw() +
   scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Utilization according to annual subway satisfaction") +
@@ -336,3 +336,81 @@ ggplot(Subway_minus_scale, aes(x=Year, y=Subway)) +
   theme_bw() +
   scale_x_continuous(breaks = c(2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016))+ ggtitle("Factors unrelated to the amount of subway utilization") +
   theme(plot.title = element_text(hjust = 0.5))
+
+#########################################################################################################
+#########################################################################################################
+#########################################################################################################
+# 지하철 이용률 요인 분석 + 포름알데히드 농도, 일산화탄소 농도 추
+# 지하철 요금, 편의시설, 공기질, 혼잡도가 지하철 이용에 영향을 미치는지 확인 + 포름알데히드 농도, 일산화탄소 농도 추
+Subway_Factor <- Transport_Average[,c(1,6)] # 지하철 요소에 지하철 이용 인원 추가
+
+Fare <- read.csv("Fare.csv", sep=",", header=T)
+Fare <- Fare[,c(1,7)] # 필요한 열 추출
+Fare <- Fare[-c(1:4),] # 필요한 행 추출
+names(Fare)[names(Fare) == "대중교통요금.4"] <- c("요금")
+Subway_Factor <- cbind(Subway_Factor, Fare$요금) # 지하철 요소에 지하철 요금 추가
+
+congested <- read.csv("congested.csv", sep=",", header=T)
+congested <- congested[-c(1,2),c(1,4)] # 필요한 행, 열 추출
+congested <- congested[c(order(congested$기간)),]
+congested <- congested[-c(1:5),]
+Subway_Factor <- cbind(Subway_Factor, congested$지하철혼잡도.1) # 지하철 요소에 지하철 혼잡도 추가
+
+Airquality <- read.csv("Airquality_year.csv", sep=",", header=T)
+Airquality <- Airquality[,-c(2)]
+Airquality <- Airquality[-c(1,2,3),]
+Airquality <- Airquality[c(order(Airquality$년도)),]
+names(Airquality)[names(Airquality) == "유지기준"] <- c("PM10")
+names(Airquality)[names(Airquality) == "유지기준.1"] <- c("CO2")
+names(Airquality)[names(Airquality) == "유지기준.2"] <- c("HCHO")
+names(Airquality)[names(Airquality) == "유지기준.3"] <- c("CO")
+Subway_Factor <- cbind(Subway_Factor, Airquality$PM10, Airquality$CO2, Airquality$HCHO,Airquality$CO) # 지하철 요소에 지하철 공기질 추가
+
+Elevator <- read.csv("Elevator.csv", sep=",", header=T)
+Elevator <- Elevator[Elevator$구분=="서울메트로" & Elevator$구분.1=="소계",] # 서울시 지하철에 관련된 데이터만 추출
+Elevator <- Elevator[,c(1,6,8)]
+Elevator <- Elevator[c(order(Elevator$기간)),]
+Elevator <- Elevator[-c(1),]
+Elevator
+Subway_Factor <- cbind(Subway_Factor, Elevator$엘레베이터.1, Elevator$에스컬레이터.1) # 지하철 요소에 지하철 편의시설 추가
+
+colnames(Subway_Factor) = c("Year", "Subway", "Fare", "Congested", "PM10", "CO2", "HCHO", "CO", "Elevator", "Escalator") # 테이블 열 이름 변경
+Subway_Factor
+str(Subway_Factor)
+
+# 요소들을 숫자로 변환
+Subway_Factor[,3] <- as.integer(gsub(",", "", Subway_Factor[,3]))  # 천 단위 요금에 , 가 들어가므로 , 를 공백으로 변환
+Subway_Factor$Congested <- as.numeric(as.character(Subway_Factor$Congested))
+Subway_Factor$PM10 <- as.numeric(as.character(Subway_Factor$PM10))
+Subway_Factor$CO2 <- as.numeric(as.character(Subway_Factor$CO2))
+Subway_Factor$HCHO <- as.numeric(as.character(Subway_Factor$HCHO))
+Subway_Factor$CO <- as.numeric(as.character(Subway_Factor$CO))
+Subway_Factor$Elevator <- as.numeric(as.character(Subway_Factor$Elevator))
+Subway_Factor$Escalator <- as.numeric(as.character(Subway_Factor$Escalator))
+
+# 변수의 단위 표준화 작업
+Subway_Factor_scale <- transform(Subway_Factor,
+                                 Subway = scale(Subway),
+                                 Fare = scale(Fare),
+                                 Congested = scale(Congested),
+                                 PM10 = scale(PM10),
+                                 CO2 = scale(CO2),
+                                 HCHO = scale(HCHO),
+                                 CO = scale(CO),
+                                 Elevator = scale(Elevator),
+                                 Escalator = scale(Escalator)
+)
+Subway_Factor_scale <- Subway_Factor_scale[,-c(1)] # 회기분석에 불필요한 기간 column은 제거
+Subway_Factor_scale
+
+# 변수 간 산포도 매트릭스 출력
+#cor(Subway_scale[c("Subway", "Fare", "Congested", "PM10", "CO2", "Elevator", "Escalator")])
+#pairs(Subway_scale[c("Subway", "Fare", "Congested", "PM10", "CO2", "Elevator", "Escalator")])
+
+# install.packages("psych")
+library(psych)
+pairs.panels(Subway_Factor_scale[c("Subway", "Fare", "Congested", "PM10", "CO2", "HCHO", "CO", "Elevator", "Escalator")])
+
+fit <- lm(Subway ~ ., data=Subway_Factor_scale)
+summary(fit)
+
