@@ -411,6 +411,6 @@ Subway_Factor_scale
 library(psych)
 pairs.panels(Subway_Factor_scale[c("Subway", "Fare", "Congested", "PM10", "CO2", "HCHO", "CO", "Elevator", "Escalator")])
 
-fit <- lm(Subway ~ ., data=Subway_Factor_scale)
-summary(fit)
+Factor <- lm(Subway ~ ., data=Subway_Factor_scale)
+summary(Factor)
 
